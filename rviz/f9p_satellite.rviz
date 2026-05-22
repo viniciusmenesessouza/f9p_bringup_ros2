@@ -1,0 +1,78 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_satellite/AerialMap
+      Name: Satellite Map
+      Enabled: true
+      Topic:
+        Value: /f9p/fix
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Object URI: https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}
+      Alpha: 1
+      Draw Behind: true
+      ENU Aligned Reference Frame: map
+      Visualize in UTM Frame: false
+      Zoom: 19
+      Blocks: 5
+      Timeout: 0
+      TF tolerance: 0.1
+      Use Local Map:
+        Value: false
+        Meter per Pixel (Zoom 0): 0
+        Origin CRS: ""
+        "Origin X ": 0
+        "Origin Y ": 0
+      Value: true
+
+    - Class: rviz_default_plugins/Axes
+      Name: GNSS Position Indicator
+      Enabled: true
+      Reference Frame: gps_sensor
+      Length: 25
+      Radius: 2.5
+      Value: true
+
+  Enabled: true
+
+  Global Options:
+    Fixed Frame: map
+    Frame Rate: 30
+    Background Color: 48; 48; 48
+
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
+      Value: true
+
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Name: Current View
+      Distance: 180
+      Pitch: 1.5708
+      Yaw: 0
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0
+      Target Frame: map
+      Value: Orbit (rviz)
+
+Window Geometry:
+  Width: 1600
+  Height: 1000
