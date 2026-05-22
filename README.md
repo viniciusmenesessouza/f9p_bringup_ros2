@@ -1,45 +1,29 @@
 # F9P Bringup
 
-ROS 2 Kilted bringup package for a u-blox F9P GNSS receiver with NTRIP RTCM corrections and live visualization through Foxglove or RViz.
+ROS 2 Kilted bringup package for a u-blox F9P GNSS receiver with NTRIP corrections and live visualization through Foxglove.
 
-The package is intended for a rover setup where the F9P is connected through a serial device such as `/dev/ttyF9P`, receives RTCM corrections from an NTRIP caster, and publishes GNSS data as ROS 2 topics.
-
-## Features
-
-- ROS 2 launch for u-blox F9P.
-- NTRIP client integration for RTCM correction input.
-- udev rule installation for stable serial naming.
-- Foxglove Bridge launch for browser-based satellite map visualization.
-- Optional RViz satellite-map visualization.
-- Publishes standard GNSS topics such as `/fix`, `/f9p/fix`, `/f9p/navpvt`, `/f9p/navstatus`, and `/f9p/rxmrtcm`.
-
-## Tested environment
-
-- Ubuntu 24.04
-- ROS 2 Kilted
-- u-blox F9P receiver
-- `ublox_gps`
-- `ntrip_client`
-- `foxglove_bridge`
-- `rtcm_msgs`
-
-## Repository layout
+The package is intended for a rover receiver connected through a stable udev alias, for example:
 
 ```text
-f9p_bringup/
-├── CMakeLists.txt
-├── package.xml
-├── launch/
-│   ├── f9p_ntrip.launch.py
-│   ├── f9p_satellite.launch.py
-│   └── f9p_foxglove.launch.py
-├── rviz/
-│   └── f9p_satellite.rviz
-├── scripts/
-│   └── navsatfix_plot_markers.py
-└── udev/
-    ├── 99-ublox-gps.rules
-    └── install_udev_rule.sh
+/dev/ttyF9P
+```
+
+It includes launch support for:
+
+- u-blox F9P receiver through `ublox_gps`
+- NTRIP RTCM correction input through `ntrip_client`
+- Foxglove Bridge for live map and numeric plots
+- optional RViz satellite visualization, if configured in the package
+
+## Tested target
+
+```text
+ROS 2: Kilted
+GNSS: u-blox F9P
+Serial device: /dev/ttyF9P
+Baudrate: 115200
+Fix topic: /f9p/fix
+Foxglove bridge: ws://127.0.0.1:8765
 ```
 
 ## Dependencies
@@ -53,149 +37,130 @@ sudo apt install \
   ros-kilted-ntrip-client \
   ros-kilted-rtcm-msgs \
   ros-kilted-foxglove-bridge \
-  ros-kilted-rviz2 \
-  ros-kilted-rviz-satellite \
-  ros-kilted-tf2-ros \
   python3-colcon-common-extensions
 ```
 
-If a package is not available through `apt`, clone the corresponding source package into the workspace `src/` folder and build it with `colcon`.
+Optional RViz satellite packages:
+
+```bash
+sudo apt install \
+  ros-kilted-rviz2 \
+  ros-kilted-rviz-satellite \
+  ros-kilted-tf2-ros
+```
 
 ## Workspace setup
+
+Create a workspace and clone the package:
 
 ```bash
 mkdir -p ~/f9p_ws/src
 cd ~/f9p_ws/src
 
 git clone <your-repository-url> f9p_bringup
+```
 
+Build:
+
+```bash
 cd ~/f9p_ws
 colcon build --symlink-install
 source install/setup.bash
 ```
 
-To avoid sourcing manually every time:
+## Udev rule
+
+The package includes a udev rule installer for creating a stable serial alias such as `/dev/ttyF9P`.
+
+Run it once:
 
 ```bash
-echo "source ~/f9p_ws/install/setup.bash" >> ~/.bashrc
-```
-
-## udev setup
-
-The package includes a udev rule installer for stable serial device naming.
-
-Run once:
-
-```bash
+cd ~/f9p_ws
+source install/setup.bash
 ros2 run f9p_bringup install_udev_rule.sh
 ```
 
-Or run the script directly:
-
-```bash
-cd ~/f9p_ws/src/f9p_bringup/udev
-./install_udev_rule.sh
-```
-
-Then unplug and reconnect the GNSS receiver.
-
-Check that the device exists:
+Then reconnect the GNSS receiver and check:
 
 ```bash
 ls -l /dev/ttyF9P
 ```
 
-If the device does not appear, inspect USB serial devices:
+If the device is not present, inspect the connected serial devices:
 
 ```bash
-ls -l /dev/ttyACM*
 ls -l /dev/ttyUSB*
-udevadm info -a -n /dev/ttyACM0
+ls -l /dev/ttyACM*
 ```
 
-Adjust `99-ublox-gps.rules` if your receiver exposes a different vendor/product ID or serial string.
+Reloading udev manually can also help:
+
+```bash
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+```
 
 ## NTRIP credentials
 
-Do not hardcode credentials in the launch file. Export them as environment variables:
+The launch file reads the NTRIP credentials from environment variables:
 
 ```bash
 export NTRIP_USERNAME='your_username'
 export NTRIP_PASSWORD='your_password'
 ```
 
-For persistent credentials, add them to a local shell file that is not committed to Git, for example:
+For persistent credentials, a local shell file can be used:
 
 ```bash
 nano ~/.f9p_ntrip_env
 ```
 
+Example content:
+
 ```bash
 export NTRIP_USERNAME='your_username'
 export NTRIP_PASSWORD='your_password'
 ```
 
-Then load it before launching:
+Load it before launching:
 
 ```bash
 source ~/.f9p_ntrip_env
 ```
 
-## Launch F9P + NTRIP
+## Launch F9P, NTRIP, and Foxglove
 
 ```bash
-ros2 launch f9p_bringup f9p_ntrip.launch.py
+cd ~/f9p_ws
+source install/setup.bash
+
+source ~/.f9p_ntrip_env
+ros2 launch f9p_bringup f9p_foxglove.launch.py
 ```
 
-This starts:
-
-- `ublox_gps_node`
-- `ntrip_ros.py`
-
-Useful topic checks:
-
-```bash
-ros2 topic list
-ros2 topic echo /f9p/fix --once
-ros2 topic echo /f9p/navpvt --once
-ros2 topic echo /f9p/navstatus --once
-ros2 topic echo /rtcm --once
-```
-
-Expected GNSS fix message type:
-
-```bash
-ros2 topic info /f9p/fix
-```
-
-Expected type:
-
-```text
-sensor_msgs/msg/NavSatFix
-```
-
-The relevant fields are:
-
-```text
-latitude
-longitude
-altitude
-position_covariance
-status.status
-status.service
-```
-
-## Launch with Foxglove
+Or, if the credentials are set in the current shell:
 
 ```bash
 ros2 launch f9p_bringup f9p_foxglove.launch.py
 ```
 
-This starts:
+The Foxglove bridge should report:
 
-- F9P node
-- NTRIP client
-- Foxglove Bridge
+```text
+Server listening on port 8765
+```
+
+Expected advertised topics include:
+
+```text
+/f9p/fix
+/f9p/navpvt
+/f9p/navstatus
+/f9p/rxmrtcm
+/rtcm
+```
+
+## Foxglove connection
 
 Open Foxglove Web and connect to:
 
@@ -203,262 +168,255 @@ Open Foxglove Web and connect to:
 ws://127.0.0.1:8765
 ```
 
-If Foxglove is running on another machine, use the robot IP instead:
+If Foxglove runs on another machine, use the robot IP instead:
 
 ```text
 ws://<robot_ip>:8765
 ```
 
-Get the robot IP with:
+The robot IP can be checked with:
 
 ```bash
 hostname -I
 ```
 
-### Foxglove map panel
+## Foxglove map panel
 
-Add a **Map** panel and select:
+Add a **Map** panel.
+
+Use the GNSS fix topic:
 
 ```text
 /f9p/fix
 ```
 
-Recommended map settings:
+Suggested map settings:
 
 ```text
 Base layer: Satellite
 Point style: Pin or Square
-Point size: 18–25 px
+Point size: 18-25 px
 Follow topic: /f9p/fix
-Time range: last 60 seconds
+Time range: Last 60 s
 ```
 
-### Foxglove plots
+The `/f9p/fix` message is `sensor_msgs/msg/NavSatFix`. The fields used by Foxglove are:
 
-Add three **Plot** panels:
+```text
+latitude
+longitude
+altitude
+```
+
+## Foxglove plots
+
+Add three **Plot** panels.
+
+Latitude:
 
 ```text
 /f9p/fix.latitude
+```
+
+Longitude:
+
+```text
 /f9p/fix.longitude
+```
+
+Altitude:
+
+```text
 /f9p/fix.altitude
 ```
 
-Recommended plot settings:
+Suggested plot settings:
 
 ```text
-X axis: timestamp
+X-axis: Timestamp
 Timestamp source: header.stamp
 Window: sliding
 Window size: 60 s
-Show legend: true
-Show values: true
+Show legend: enabled
+Show values: enabled
 ```
 
-## Launch with RViz satellite map
+## Check ROS topics
+
+List topics:
 
 ```bash
-ros2 launch f9p_bringup f9p_satellite.launch.py
+ros2 topic list
 ```
 
-This starts:
+Check the fix topic type:
 
-- F9P node
-- NTRIP client
-- static TF from `map` to `gps_sensor`
-- RViz with satellite map configuration
-
-RViz expects the GNSS fix topic:
-
-```text
-/f9p/fix
+```bash
+ros2 topic info /f9p/fix
 ```
 
-The RViz config is stored in:
-
-```text
-rviz/f9p_satellite.rviz
-```
-
-## Serial port configuration
-
-The default launch expects:
-
-```text
-/dev/ttyF9P
-```
-
-If using a different serial device, edit the launch file parameter:
-
-```python
-'device': '/dev/ttyF9P'
-```
-
-The default baudrate is:
-
-```text
-115200
-```
-
-The launch also sets:
-
-```python
-'uart1.baudrate': 115200
-```
-
-## Common checks
-
-### Check whether the F9P node is publishing fixes
+Check one fix message:
 
 ```bash
 ros2 topic echo /f9p/fix --once
 ```
 
-### Check RTCM correction input
+Expected structure:
 
-```bash
-ros2 topic echo /rtcm --once
-ros2 topic echo /f9p/rxmrtcm --once
+```yaml
+header:
+  stamp:
+    sec: ...
+    nanosec: ...
+  frame_id: ...
+status:
+  status: ...
+  service: ...
+latitude: ...
+longitude: ...
+altitude: ...
+position_covariance: [...]
+position_covariance_type: ...
 ```
 
-### Check NTRIP logs
+## Check NTRIP and RTCM
 
-Run the launch and inspect whether the NTRIP node connects to the caster and receives correction data.
+Check if RTCM corrections are being published:
 
 ```bash
-ros2 launch f9p_bringup f9p_foxglove.launch.py
+ros2 topic echo /rtcm
 ```
 
-### Check Foxglove Bridge
+Check if the F9P driver sees RTCM information:
+
+```bash
+ros2 topic echo /f9p/rxmrtcm
+```
+
+Check receiver status:
+
+```bash
+ros2 topic echo /f9p/navstatus
+```
+
+Check the high-level navigation solution:
+
+```bash
+ros2 topic echo /f9p/navpvt
+```
+
+## Common issues
+
+### Foxglove says localhost is unreachable
+
+First check that the bridge is listening:
 
 ```bash
 ss -ltnp | grep 8765
 ```
 
-Expected:
-
-```text
-LISTEN ... 127.0.0.1:8765 ...
-```
-
-Test the socket:
+If needed, run the bridge alone:
 
 ```bash
-nc -vz 127.0.0.1 8765
+ros2 launch foxglove_bridge foxglove_bridge_launch.xml port:=8765 address:=127.0.0.1
 ```
 
-Expected:
-
-```text
-Connection to 127.0.0.1 8765 port [tcp/*] succeeded!
-```
-
-If port `8765` is already in use:
-
-```bash
-sudo ss -ltnp | grep ':8765'
-sudo fuser -k 8765/tcp
-```
-
-Or change the Foxglove Bridge port in the launch file.
-
-## Troubleshooting
-
-### Foxglove Web works but Foxglove Desktop does not
-
-Use Foxglove Web with:
+Then connect Foxglove to:
 
 ```text
 ws://127.0.0.1:8765
 ```
 
-If the Web version works, the ROS bridge is working. The issue is isolated to the desktop app environment or its network access.
+If the web version works and the desktop app does not, the ROS side is already functioning. Use the web version or check the desktop app installation/sandboxing.
 
-### Foxglove says localhost is unreachable
+### Bind Error on port 8765
 
-Use the explicit IPv4 address:
-
-```text
-ws://127.0.0.1:8765
-```
-
-instead of:
-
-```text
-ws://localhost:8765
-```
-
-### Foxglove Bridge bind error
-
-If the bridge prints:
-
-```text
-Couldn't initialize websocket server: Bind Error
-```
-
-then the selected port is already in use or the address cannot be bound.
-
-Check:
+Check what is using the port:
 
 ```bash
 sudo ss -ltnp | grep ':8765'
 ```
 
-Kill the existing process if needed:
+Stop the existing process or use another port, for example:
 
 ```bash
-sudo fuser -k 8765/tcp
+ros2 launch foxglove_bridge foxglove_bridge_launch.xml port:=8766 address:=127.0.0.1
 ```
 
-Then relaunch.
+Then connect to:
 
-### No `/dev/ttyF9P`
+```text
+ws://127.0.0.1:8766
+```
 
-Reload udev rules:
+### No `/f9p/fix`
+
+Check that the serial device exists:
 
 ```bash
-sudo udevadm control --reload-rules
-sudo udevadm trigger
+ls -l /dev/ttyF9P
 ```
 
-Then reconnect the receiver.
-
-Check raw devices:
+Check whether the node is running:
 
 ```bash
-ls -l /dev/ttyACM*
-ls -l /dev/ttyUSB*
+ros2 node list
 ```
 
-### No RTK fix
-
-Check:
+Check all GNSS-related topics:
 
 ```bash
-ros2 topic echo /rtcm --once
-ros2 topic echo /f9p/rxmrtcm --once
-ros2 topic echo /f9p/navstatus --once
-ros2 topic echo /f9p/navpvt --once
+ros2 topic list | grep -E 'fix|nav|ublox|f9p'
 ```
 
-Possible causes:
+### Permission denied on the serial port
 
-- NTRIP caster unreachable.
-- Wrong mountpoint.
-- Wrong NTRIP credentials.
-- RTCM stream not compatible with the receiver.
-- Poor sky visibility.
-- Receiver configuration not accepting RTCM on the active port.
-- Insufficient convergence time.
+Add the user to the dialout group:
+
+```bash
+sudo usermod -a -G dialout $USER
+```
+
+Log out and log back in, then reconnect the device.
+
+### No RTK fixed solution
+
+Check the following:
+
+```bash
+ros2 topic echo /rtcm
+ros2 topic echo /f9p/rxmrtcm
+ros2 topic echo /f9p/navstatus
+ros2 topic echo /f9p/navpvt
+```
+
+Typical causes are wrong mountpoint, unavailable caster, weak sky visibility, bad antenna placement, wrong correction stream, or no RTCM reaching the receiver.
+
+## Repository layout
+
+Expected package structure:
+
+```text
+f9p_bringup/
+├── CMakeLists.txt
+├── package.xml
+├── launch/
+│   ├── f9p_foxglove.launch.py
+│   └── f9p_satellite.launch.py
+├── rviz/
+│   └── f9p_satellite.rviz
+├── scripts/
+│   └── install_udev_rule.sh
+└── udev/
+    └── 99-ublox-gps.rules
+```
 
 ## Notes
 
-- `NavSatFix.latitude` and `NavSatFix.longitude` are in degrees.
-- `NavSatFix.altitude` is in meters.
-- `/f9p/fix` is the main topic for map visualization.
-- `/f9p/navpvt` is useful for detailed u-blox navigation status.
-- `/f9p/rxmrtcm` is useful for checking whether RTCM messages are being received.
-- Foxglove does not need a custom plotting node for latitude, longitude, or altitude; it can plot those fields directly from `/f9p/fix`.
+The F9P launch uses the receiver as a rover, with `tmode3` disabled.
 
-## License
+The NTRIP client publishes RTCM corrections on `/rtcm`.
 
-Add your license here.
+The u-blox driver consumes RTCM corrections and publishes the GNSS solution on `/f9p/fix`.
+
+Foxglove can use `/f9p/fix` directly for both the satellite map and latitude/longitude/altitude plots.
