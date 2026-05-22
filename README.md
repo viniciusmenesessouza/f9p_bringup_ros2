@@ -1,4 +1,4 @@
-# F9P Bringup
+# F9P Bringup ROS2
 
 ROS 2 Kilted bringup package for a u-blox F9P GNSS receiver with NTRIP corrections and live visualization through Foxglove.
 
