@@ -23,7 +23,7 @@ GNSS: u-blox F9P
 Serial device: /dev/ttyF9P
 Baudrate: 115200
 Fix topic: /f9p/fix
-Foxglove bridge: ws://127.0.0.1:8765
+Foxglove bridge: ws://127.0.0.1:8765 (or 0.0.0.0:8765)
 ```
 
 ## Dependencies
@@ -165,7 +165,7 @@ Expected advertised topics include:
 Open Foxglove Web and connect to:
 
 ```text
-ws://127.0.0.1:8765
+ws://127.0.0.1:8765 (or 0.0.0.0:8765)
 ```
 
 If Foxglove runs on another machine, use the robot IP instead:
@@ -318,13 +318,13 @@ ss -ltnp | grep 8765
 If needed, run the bridge alone:
 
 ```bash
-ros2 launch foxglove_bridge foxglove_bridge_launch.xml port:=8765 address:=127.0.0.1
+ros2 launch foxglove_bridge foxglove_bridge_launch.xml port:=8765 address:=127.0.0.1 #(or 0.0.0.0)
 ```
 
 Then connect Foxglove to:
 
 ```text
-ws://127.0.0.1:8765
+ws://127.0.0.1:8765 (or 0.0.0.0:8765)
 ```
 
 If the web version works and the desktop app does not, the ROS side is already functioning. Use the web version or check the desktop app installation/sandboxing.
@@ -340,13 +340,13 @@ sudo ss -ltnp | grep ':8765'
 Stop the existing process or use another port, for example:
 
 ```bash
-ros2 launch foxglove_bridge foxglove_bridge_launch.xml port:=8766 address:=127.0.0.1
+ros2 launch foxglove_bridge foxglove_bridge_launch.xml port:=8766 address:=127.0.0.1 #(or 0.0.0.0)
 ```
 
 Then connect to:
 
 ```text
-ws://127.0.0.1:8766
+ws://127.0.0.1:8766 (or 0.0.0.0:8766)
 ```
 
 ### No `/f9p/fix`
