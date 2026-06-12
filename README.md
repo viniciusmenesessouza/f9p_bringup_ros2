@@ -67,6 +67,7 @@ cd ~/f9p_ws
 colcon build --symlink-install
 source install/setup.bash
 ```
+OBS: if the colcon build looks stuck, you may need to input the sudo password for installing the USB rules for the receiver.
 
 ## Udev rule
 
