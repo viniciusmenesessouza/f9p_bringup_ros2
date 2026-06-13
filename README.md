@@ -1,4 +1,4 @@
-# F9P Bringup
+# F9P Bringup ROS2
 
 ROS 2 Kilted bringup package for a u-blox F9P GNSS receiver with NTRIP corrections and live visualization through Foxglove.
 
@@ -67,6 +67,7 @@ cd ~/f9p_ws
 colcon build --symlink-install
 source install/setup.bash
 ```
+OBS: if the colcon build looks stuck, you may need to input the sudo password for installing the USB rules for the receiver.
 
 ## Udev rule
 
