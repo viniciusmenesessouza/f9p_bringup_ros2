@@ -105,6 +105,9 @@ sudo udevadm trigger
 The launch file reads the NTRIP credentials from environment variables:
 
 ```bash
+export NTRIP_HOST='your_host_ip'
+export NTRIP_PORT='your_host_port'
+export NTRIP_MOUNTPOINT='your_host_mountpoint'
 export NTRIP_USERNAME='your_username'
 export NTRIP_PASSWORD='your_password'
 ```
@@ -113,13 +116,6 @@ For persistent credentials, a local shell file can be used:
 
 ```bash
 nano ~/.f9p_ntrip_env
-```
-
-Example content:
-
-```bash
-export NTRIP_USERNAME='your_username'
-export NTRIP_PASSWORD='your_password'
 ```
 
 Load it before launching:

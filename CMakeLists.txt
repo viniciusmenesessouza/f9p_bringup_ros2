@@ -29,7 +29,6 @@ install(
 )
 
 add_custom_target(install_udev_rule ALL
-  COMMAND bash -c "sudo -n true 2>/dev/null || sudo -v"
   COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/udev/install_udev_rule.sh
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/udev
   COMMENT "Installing udev rule for ublox GPS"

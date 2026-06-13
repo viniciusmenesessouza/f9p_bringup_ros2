@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "Enter sudo password to install: " > /dev/tty
+
 SUDO=''
 if (( EUID != 0 )); then
     SUDO='sudo'
